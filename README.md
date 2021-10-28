@@ -1,2 +1,9 @@
 # sw_hdf5_ozone
-HDF5 Ozone parsing
+
+HDF4 Ozone parsing
+
+## Install dependencies
+
+```
+conda install -c conda-forge pyhdf
+```
