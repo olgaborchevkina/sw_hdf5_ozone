@@ -1,6 +1,7 @@
 from pyhdf.SD import SD, SDC
 from pathlib import Path
 import re
+import glob
 
 SDS_O3_COLUMN = "O3_column"
 SDS_03_STD = "O3_std"
@@ -64,10 +65,27 @@ def process_file(filepath):
 def main():
     log("Script is started")
 
-    filepath = ".\\input\\o3col2020080212.hdf"
+    result = list()
     
-    result = process_file(filepath)
-    save_list_to_dat(result, ".\\output\output.dat")
+    files = glob.glob("./input/*.hdf")    
+    output_path = ".\\output\output.dat"
+
+    for filepath in files:
+        log("Process >> " + filepath)
+
+        try:
+            result += process_file(filepath)
+            log(f"Finish processing of <{filepath}>")
+    
+        except Exception as e:
+            log("Cannot process >> ", filepath)
+            log("Reason >> " + str(e))
+            
+        finally:
+            pass
+
+    log(f"Results saved to {output_path}")
+    save_list_to_dat(result, output_path)
 
     log("Script is ended")
 
