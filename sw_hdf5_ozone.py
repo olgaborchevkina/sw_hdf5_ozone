@@ -1,13 +1,13 @@
 from pyhdf.SD import SD, SDC
-import pprint
+from pathlib import Path
+import re
 
 SDS_O3_COLUMN = "O3_column"
 SDS_03_STD = "O3_std"
 DATA_STEP = 0.5
 LAT_START = -90.0
-LAT_STOP = 90.5
-LONG_START = -180
-LONG_STOP = 180
+LONG_START = -179.5
+
 
 def lat_idx_to_value(idx):
     return LAT_START + 0.5 * idx
@@ -41,6 +41,14 @@ def save_list_to_dat(data_list, out_filepath, header=None):
 def process_file(filepath):
     result = list()
 
+    # Extract data from filename
+    sample_datetime = Path(filepath).stem[-10:]
+    sample_data = sample_datetime[:-2]
+    sample_data = sample_data[:4] + "." + '.'.join(re.findall('..', sample_data[4:]))
+    sample_time = sample_datetime[-2:] + ":00:00"
+    measure_time = sample_data + " " + sample_time
+
+    # Extract HDF data
     hdf_file = SD(filepath, SDC.READ)
     datasets_dic = hdf_file.datasets()
     sds_obj = hdf_file.select(SDS_O3_COLUMN)
@@ -48,7 +56,7 @@ def process_file(filepath):
 
     for lat_idx in range(len(data_arr)):
         for long_idx in range(len(data_arr[lat_idx])):
-            measure = [lat_idx_to_value(lat_idx), long_idx_to_value(long_idx), data_arr[lat_idx][long_idx]]
+            measure = [measure_time, lat_idx_to_value(lat_idx), long_idx_to_value(long_idx), data_arr[lat_idx][long_idx]]
             result.append(measure)
         
     return result
@@ -59,7 +67,6 @@ def main():
     filepath = ".\\input\\o3col2020080212.hdf"
     
     result = process_file(filepath)
-
     save_list_to_dat(result, ".\\output\output.dat")
 
     log("Script is ended")
