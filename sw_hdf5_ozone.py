@@ -9,6 +9,24 @@ DATA_STEP = 0.5
 LAT_START = -90.0
 LONG_START = -179.5
 
+class GeoFilter:
+    
+    lat_min = 0
+    lat_max = 0
+    long_min = 0
+    long_max = 0
+    
+    def __init__(self, lat_min, lat_max, long_min, long_max) -> None:
+        self.lat_min = lat_min
+        self.lat_max = lat_max
+        self.long_min = long_min
+        self.long_max = long_max
+        
+    def is_accepted(self, lat, long) -> bool:
+        if lat >= self.lat_min and lat <= self.lat_max and long >= self.long_min and long <= self.long_max:
+            return True
+        else:
+            return False
 
 def lat_idx_to_value(idx):
     return LAT_START + 0.5 * idx
@@ -39,7 +57,7 @@ def save_list_to_dat(data_list, out_filepath, header=None):
     with open(out_filepath,"w") as f:
         f.writelines(write_list)
 
-def process_file(filepath):
+def process_file(filepath, geo_filter):
     result = list()
 
     # Extract data from filename
@@ -57,8 +75,11 @@ def process_file(filepath):
 
     for lat_idx in range(len(data_arr)):
         for long_idx in range(len(data_arr[lat_idx])):
-            measure = [measure_time, lat_idx_to_value(lat_idx), long_idx_to_value(long_idx), data_arr[lat_idx][long_idx]]
-            result.append(measure)
+            lat = lat_idx_to_value(lat_idx)
+            long = long_idx_to_value(long_idx)
+            if geo_filter.is_accepted(lat, long):
+                measure = [measure_time, lat, long, data_arr[lat_idx][long_idx]]
+                result.append(measure)
         
     return result
 
@@ -69,12 +90,13 @@ def main():
     
     files = glob.glob("./input/*.hdf")    
     output_path = ".\\output\output.dat"
+    geo_filter = GeoFilter(lat_min=50.0, lat_max=70.0, long_min=20.0, long_max=30.0)
 
     for filepath in files:
         log("Process >> " + filepath)
 
         try:
-            result += process_file(filepath)
+            result += process_file(filepath, geo_filter)
             log(f"Finish processing of <{filepath}>")
     
         except Exception as e:
